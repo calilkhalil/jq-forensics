@@ -1,0 +1,17 @@
+# Set default behavior to automatically normalize line endings
+* text=auto
+
+# Force Unix line endings for shell scripts (they need to run on Linux/macOS)
+*.sh text eol=lf
+
+# Force Unix line endings for jq files (consistency)
+*.jq text eol=lf
+
+# Allow Windows line endings for PowerShell scripts
+*.ps1 text eol=crlf
+
+# Markdown and documentation
+*.md text eol=lf
+
+# License files
+LICENSE text eol=lf
