@@ -14,6 +14,25 @@ Write-Host "Copying module files to $InstallDir..."
 Copy-Item -Path "src" -Destination $InstallDir -Recurse -Force
 Copy-Item -Path "forensics.jq" -Destination $InstallDir -Force
 
+# Build single .jq file by concatenating all modules
+Write-Host "Building combined jq module..."
+$combinedContent = @"
+# jq-forensics - Forensic analysis functions for jq
+# Auto-generated - Do not edit directly
+
+"@
+
+# Concatenate all source modules
+Get-ChildItem -Path "src\*.jq" | ForEach-Object {
+    $combinedContent += "# Source: src\$($_.Name)`n"
+    $combinedContent += Get-Content $_.FullName -Raw
+    $combinedContent += "`n"
+}
+
+# Write without BOM (UTF8 without BOM)
+$utf8NoBom = New-Object System.Text.UTF8Encoding $false
+[System.IO.File]::WriteAllText("$InstallDir\.jq", $combinedContent, $utf8NoBom)
+
 # Check if .jq exists
 if (Test-Path $JqFile) {
     $isSymlink = (Get-Item $JqFile).Attributes -band [System.IO.FileAttributes]::ReparsePoint
@@ -22,7 +41,7 @@ if (Test-Path $JqFile) {
         Write-Host ""
         Write-Host "Warning: $JqFile already exists and is not a symlink." -ForegroundColor Yellow
         Write-Host "Please backup your existing file and remove it, then run:"
-        Write-Host "  New-Item -ItemType SymbolicLink -Path '$JqFile' -Target '$InstallDir\forensics.jq'"
+        Write-Host "  New-Item -ItemType SymbolicLink -Path '$JqFile' -Target '$InstallDir\.jq'"
         Write-Host ""
         exit 1
     }
@@ -32,9 +51,9 @@ if (Test-Path $JqFile) {
 }
 
 # Create symlink (requires admin privileges or Developer Mode on Windows 10+)
-Write-Host "Creating symlink $JqFile -> $InstallDir\forensics.jq..."
+Write-Host "Creating symlink $JqFile -> $InstallDir\.jq..."
 try {
-    New-Item -ItemType SymbolicLink -Path $JqFile -Target "$InstallDir\forensics.jq" -Force | Out-Null
+    New-Item -ItemType SymbolicLink -Path $JqFile -Target "$InstallDir\.jq" -Force | Out-Null
     Write-Host ""
     Write-Host "Installation complete." -ForegroundColor Green
 } catch {
@@ -44,10 +63,10 @@ try {
     Write-Host ""
     Write-Host "Alternative methods:"
     Write-Host "  1. Create symlink manually with administrator PowerShell:"
-    Write-Host "     New-Item -ItemType SymbolicLink -Path '$JqFile' -Target '$InstallDir\forensics.jq'"
+    Write-Host "     New-Item -ItemType SymbolicLink -Path '$JqFile' -Target '$InstallDir\.jq'"
     Write-Host ""
     Write-Host "  2. Copy the file directly (manual updates required):"
-    Write-Host "     Copy-Item '$InstallDir\forensics.jq' '$JqFile'"
+    Write-Host "     Copy-Item '$InstallDir\.jq' '$JqFile'"
     Write-Host ""
     exit 1
 }
