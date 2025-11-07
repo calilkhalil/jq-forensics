@@ -16,32 +16,15 @@ The jq maintainers suggested this approach, and it turned out to be the right ca
 
 ## Functions
 
-### `fromwebkit`
-Convert WebKit/Chrome timestamp to ISO 8601 format.
+### Timestamps
 
-**Input:** Number (microseconds since 1601-01-01 UTC)  
-**Output:** String (ISO 8601) or null
+- **fromwebkit** - Converts those huge WebKit/Chrome timestamps into ISO 8601
+- **toreadable** - Takes any timestamp and makes it human-friendly (YYYY-MM-DD HH:MM:SS)
 
-**Example:**
-```bash
-echo '13318523932000000' | jq 'fromwebkit'
-# "2023-03-15T14:32:12Z"
-```
+### Transformations
 
-### `toreadable`
-Convert any timestamp to human-readable format.
-
-**Input:** ISO 8601 string or Unix timestamp (seconds/milliseconds)  
-**Output:** String "YYYY-MM-DD HH:MM:SS" or null
-
-**Example:**
-```bash
-echo '1577919792' | jq 'toreadable'
-# "2020-01-01 23:03:12"
-
-echo '"2020-01-01T23:43:12Z"' | jq 'toreadable'
-# "2020-01-01 23:43:12"
-```
+- **todefang** - Makes malicious URLs/IPs/emails safe to share in docs
+- **fromdefang** - Converts them back when you need the original
 
 ## Installation
 
@@ -101,16 +84,20 @@ New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.jq" -Target "$env:USERP
 After installation, the functions work like built-in jq functions:
 
 ```bash
-# Analyze Chrome history
+# Analyze Chrome history with readable timestamps
 jq '.[] | {
   url: .url,
   title: .title,
   last_visit: .last_visit_time | fromwebkit | toreadable
 }' History.json
 
-# Pipeline multiple timestamps
-echo '[13318523932000000, 1577919792, "2020-01-01T23:43:12Z"]' | 
-  jq 'map(if type == "number" and . > 10000000000000 then fromwebkit else . end | toreadable)'
+# Defang IOCs from incident report
+jq '.indicators | map(todefang)' incident_iocs.json
+
+# Process mixed IOCs in threat intel feed
+echo '["http://evil.com", "192.168.1.1", "attacker@phish.org"]' | 
+  jq 'map(todefang)'
+# ["hxxp://evil[.]com", "192[.]168[.]1[.]1", "attacker[@]phish[.]org"]
 ```
 
 ## Architecture
