@@ -19,6 +19,7 @@ The jq maintainers suggested this approach, and it turned out to be the right ca
 ### Timestamps
 
 - **fromwebkit** - Converts those huge WebKit/Chrome timestamps into ISO 8601
+- **fromcocoa** - Converts macOS/iOS Cocoa timestamps into ISO 8601
 - **toreadable** - Takes any timestamp and makes it human-friendly (YYYY-MM-DD HH:MM:SS)
 
 ### Transformations
