@@ -75,29 +75,16 @@ echo "Testing if file exists and is readable:"
 ls -la "$JQ_FILE" || echo "ERROR: File not found!"
 
 # Load combined .jq file and tests
-# Combine both files into one (like install.sh does)
-# tests.jq ends with "run_tests" which will execute automatically
+# Use -f to load both files, then explicitly evaluate run_tests
 echo ""
 echo "Running tests..."
 
-# Create temporary combined file
-TEMP_FILE=$(mktemp)
-cat "$JQ_FILE" tests/tests.jq > "$TEMP_FILE"
-
-# Debug: show last few lines of combined file to verify run_tests is there
-echo "Last 5 lines of combined file:"
-tail -5 "$TEMP_FILE"
-echo ""
-
-# When using -f with a file that ends with a top-level expression,
-# jq automatically executes that expression
-# Since tests.jq ends with "run_tests", it will execute automatically
-echo "Executing jq..."
-results=$(echo "null" | jq -f "$TEMP_FILE" 2>&1)
+# Load JQ_FILE first (contains all functions), then tests.jq, then execute run_tests
+# When using multiple -f flags, jq loads all files, then we need to provide the expression
+# Since jq automatically loads ~/.jq, we might not need to load JQ_FILE if it's the installed profile
+# But to be safe, we'll load it explicitly and then tests.jq, then call run_tests
+results=$(jq -f "$JQ_FILE" -f tests/tests.jq run_tests <<< "null" 2>&1)
 exit_code=$?
-
-# Clean up temp file
-rm -f "$TEMP_FILE"
 
 if [ $exit_code -ne 0 ]; then
     echo -e "${RED}✗ Test execution failed:${NC}"
