@@ -79,8 +79,8 @@ ls -la "$JQ_FILE" || echo "ERROR: File not found!"
 # tests.jq ends with "run_tests" which outputs the results
 echo ""
 echo "Running tests..."
-# jq loads files with -f, and tests.jq ends with run_tests which executes
-results=$(echo "null" | jq -f "$JQ_FILE" -f tests/tests.jq 2>&1)
+# Combine both files and pipe to jq - this executes run_tests from tests.jq
+results=$(cat "$JQ_FILE" tests/tests.jq | jq 2>&1)
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
