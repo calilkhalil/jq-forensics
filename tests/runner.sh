@@ -29,8 +29,11 @@ if [ ! -f "$TESTS_JQ" ]; then
 fi
 
 # Run tests and process results
+# Change to project root to ensure relative includes work correctly
+cd "$PROJECT_ROOT"
 # Use -f to load files in sequence (forensics first, then tests)
-results=$(jq -L "$PROJECT_ROOT" -f "$FORENSICS_JQ" -f "$TESTS_JQ" 2>&1)
+# The -L flag sets the search path for includes
+results=$(jq -L . -f forensics.jq -f tests/tests.jq 2>&1)
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
