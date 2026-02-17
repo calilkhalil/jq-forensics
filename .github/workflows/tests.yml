@@ -17,11 +17,18 @@ jobs:
       
     - name: Install jq
       run: |
-        sudo apt-get update
-        sudo apt-get install -y jq
+        # Install latest jq from official source
+        JQ_VERSION="1.7.1"
+        wget -q -O jq https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux-amd64
+        chmod +x jq
+        sudo mv jq /usr/local/bin/
         
     - name: Verify jq installation
-      run: jq --version
+      run: |
+        jq --version
+        echo "jq location: $(which jq)"
+        echo "Testing jq with a simple command:"
+        echo '{"test": true}' | jq .
       
     - name: Debug - List files
       run: |
