@@ -29,11 +29,31 @@ if [ ! -f "$TESTS_JQ" ]; then
 fi
 
 # Run tests and process results
+# Use -f to load files in sequence (forensics first, then tests)
 results=$(jq -L "$PROJECT_ROOT" -f "$FORENSICS_JQ" -f "$TESTS_JQ" 2>&1)
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
     echo -e "${RED}✗ Test execution failed:${NC}"
+    echo "$results"
+    echo ""
+    echo "Debug info:"
+    echo "  PROJECT_ROOT: $PROJECT_ROOT"
+    echo "  FORENSICS_JQ: $FORENSICS_JQ"
+    echo "  TESTS_JQ: $TESTS_JQ"
+    echo "  Exit code: $exit_code"
+    exit 1
+fi
+
+# Check if results are empty or invalid
+if [ -z "$results" ]; then
+    echo -e "${RED}✗ Test execution produced no output${NC}"
+    exit 1
+fi
+
+# Verify results is valid JSON
+if ! echo "$results" | jq empty 2>/dev/null; then
+    echo -e "${RED}✗ Test results are not valid JSON:${NC}"
     echo "$results"
     exit 1
 fi
