@@ -80,7 +80,8 @@ ls -la "$JQ_FILE" || echo "ERROR: File not found!"
 echo ""
 echo "Running tests..."
 # Combine both files and pipe to jq - this executes run_tests from tests.jq
-results=$(cat "$JQ_FILE" tests/tests.jq | jq 2>&1)
+# Pass null as input since run_tests doesn't need input
+results=$(echo "null" | cat "$JQ_FILE" tests/tests.jq | jq 2>&1)
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
@@ -92,6 +93,12 @@ if [ $exit_code -ne 0 ]; then
     echo "  JQ_FILE: $JQ_FILE"
     echo "  TESTS_JQ: $TESTS_JQ"
     echo "  Exit code: $exit_code"
+    echo ""
+    echo "First 20 lines of JQ_FILE:"
+    head -20 "$JQ_FILE"
+    echo ""
+    echo "Last 10 lines of tests.jq:"
+    tail -10 tests/tests.jq
     exit 1
 fi
 
