@@ -24,11 +24,7 @@ jobs:
       run: jq --version
       
     - name: Install jq-forensics profile
-      run: |
-        chmod +x scripts/install.sh
-        ./scripts/install.sh
+      run: bash scripts/install.sh
       
     - name: Run test suite
-      run: |
-        chmod +x tests/runner.sh
-        ./tests/runner.sh
+      run: bash tests/runner.sh
