@@ -30,26 +30,24 @@ jobs:
         echo "Testing jq with a simple command:"
         echo '{"test": true}' | jq .
       
-    - name: Debug - List files
+    - name: Setup jq profile (like install script)
       run: |
-        echo "Project structure:"
-        ls -la
-        echo ""
-        echo "Source files:"
-        ls -la src/
-        echo ""
-        echo "Test files:"
-        ls -la tests/
-      
-    - name: Validate forensics.jq
-      run: |
-        echo "Testing forensics.jq with empty input..."
-        echo "null" | jq -L . -f forensics.jq || echo "Error loading forensics.jq"
-      
-    - name: Validate tests.jq syntax
-      run: |
-        echo "Testing if tests.jq can be parsed..."
-        jq -L . -f forensics.jq -f tests/tests.jq empty 2>&1 || echo "Error loading tests"
+        # Create combined .jq file just like the install script does
+        echo "# jq-forensics - Forensic analysis functions for jq" > .jq
+        echo "# Auto-generated - Do not edit directly" >> .jq
+        echo "" >> .jq
+        
+        # Concatenate all source modules
+        for file in src/*.jq; do
+          if [ -f "$file" ]; then
+            echo "# Source: $file" >> .jq
+            cat "$file" >> .jq
+            echo "" >> .jq
+          fi
+        done
+        
+        echo "Created combined .jq file:"
+        wc -l .jq
       
     - name: Run test suite
       run: |

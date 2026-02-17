@@ -32,18 +32,29 @@ fi
 # Change to project root to ensure relative includes work correctly
 cd "$PROJECT_ROOT"
 
-# Try to load and run tests
-# First, test if forensics.jq loads correctly
-if ! echo "null" | jq -L . -f forensics.jq . > /dev/null 2>&1; then
-    echo -e "${RED}✗ Error: forensics.jq failed to load${NC}"
-    echo "Trying to load forensics.jq:"
-    echo "null" | jq -L . -f forensics.jq . 2>&1 || true
-    exit 1
+# Check if combined .jq file exists (created by CI or install script)
+# If not, create it like the install script does
+if [ ! -f ".jq" ]; then
+    echo "Creating combined .jq file (like install script)..."
+    cat > .jq << 'EOF'
+# jq-forensics - Forensic analysis functions for jq
+# Auto-generated - Do not edit directly
+
+EOF
+    
+    # Concatenate all source modules
+    for file in src/*.jq; do
+        if [ -f "$file" ]; then
+            echo "# Source: $file" >> .jq
+            cat "$file" >> .jq
+            echo "" >> .jq
+        fi
+    done
 fi
 
-# Load both files and run tests
-# jq needs an input, so we pass null and the tests.jq will call run_tests
-results=$(echo "null" | jq -L . -f forensics.jq -f tests/tests.jq 2>&1)
+# Load combined .jq file and tests
+# The .jq file contains all functions, then we load tests.jq
+results=$(echo "null" | jq -f .jq -f tests/tests.jq 2>&1)
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
