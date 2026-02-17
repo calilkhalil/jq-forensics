@@ -74,9 +74,31 @@ echo "JQ_FILE: $JQ_FILE"
 echo "Testing if file exists and is readable:"
 ls -la "$JQ_FILE" || echo "ERROR: File not found!"
 
+# First, test if the JQ_FILE loads correctly
+echo ""
+echo "Testing if JQ_FILE loads correctly..."
+if ! echo "null" | jq -f "$JQ_FILE" . > /dev/null 2>&1; then
+    echo -e "${RED}✗ Error: JQ_FILE failed to load${NC}"
+    echo "Trying to load JQ_FILE:"
+    echo "null" | jq -f "$JQ_FILE" . 2>&1 || true
+    exit 1
+fi
+echo "✓ JQ_FILE loads correctly"
+
+# Test if tests.jq can be parsed
+echo "Testing if tests.jq can be parsed..."
+if ! echo "null" | jq -f "$JQ_FILE" -f tests/tests.jq . > /dev/null 2>&1; then
+    echo -e "${RED}✗ Error: tests.jq failed to parse${NC}"
+    echo "Trying to parse tests.jq:"
+    echo "null" | jq -f "$JQ_FILE" -f tests/tests.jq . 2>&1 || true
+    exit 1
+fi
+echo "✓ tests.jq parses correctly"
+
 # Load combined .jq file and tests
 # The .jq file contains all functions, then we load tests.jq
-# jq automatically loads ~/.jq, but we need to explicitly load it with -f when using tests.jq
+echo ""
+echo "Running tests..."
 results=$(echo "null" | jq -f "$JQ_FILE" -f tests/tests.jq 2>&1)
 exit_code=$?
 
@@ -86,7 +108,7 @@ if [ $exit_code -ne 0 ]; then
     echo ""
     echo "Debug info:"
     echo "  PROJECT_ROOT: $PROJECT_ROOT"
-    echo "  FORENSICS_JQ: $FORENSICS_JQ"
+    echo "  JQ_FILE: $JQ_FILE"
     echo "  TESTS_JQ: $TESTS_JQ"
     echo "  Exit code: $exit_code"
     exit 1
