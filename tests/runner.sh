@@ -79,10 +79,18 @@ ls -la "$JQ_FILE" || echo "ERROR: File not found!"
 # tests.jq ends with "run_tests" which outputs the results
 echo ""
 echo "Running tests..."
-# Combine both files and pipe to jq - this executes run_tests from tests.jq
-# Pass null as input since run_tests doesn't need input
-results=$(echo "null" | cat "$JQ_FILE" tests/tests.jq | jq 2>&1)
+
+# Create a temporary combined file
+TEMP_FILE=$(mktemp)
+cat "$JQ_FILE" tests/tests.jq > "$TEMP_FILE"
+
+# Run jq with the combined file
+# tests.jq ends with run_tests which executes automatically
+results=$(echo "null" | jq -f "$TEMP_FILE" 2>&1)
 exit_code=$?
+
+# Clean up
+rm -f "$TEMP_FILE"
 
 if [ $exit_code -ne 0 ]; then
     echo -e "${RED}✗ Test execution failed:${NC}"
@@ -94,11 +102,9 @@ if [ $exit_code -ne 0 ]; then
     echo "  TESTS_JQ: $TESTS_JQ"
     echo "  Exit code: $exit_code"
     echo ""
-    echo "First 20 lines of JQ_FILE:"
-    head -20 "$JQ_FILE"
-    echo ""
-    echo "Last 10 lines of tests.jq:"
-    tail -10 tests/tests.jq
+    echo "Trying to see jq error details..."
+    # Try to get more details about the error
+    echo "null" | jq -f "$JQ_FILE" -f tests/tests.jq 2>&1 || true
     exit 1
 fi
 
