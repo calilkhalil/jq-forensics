@@ -42,8 +42,8 @@ if ! echo "null" | jq -L . -f forensics.jq . > /dev/null 2>&1; then
 fi
 
 # Load both files and run tests
-# Combine the files content and pipe to jq
-results=$(cat forensics.jq tests/tests.jq | jq -L . 2>&1)
+# jq needs an input, so we pass null and the tests.jq will call run_tests
+results=$(echo "null" | jq -L . -f forensics.jq -f tests/tests.jq 2>&1)
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
