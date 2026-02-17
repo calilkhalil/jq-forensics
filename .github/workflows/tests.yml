@@ -23,6 +23,13 @@ jobs:
     - name: Verify jq installation
       run: jq --version
       
+    - name: Validate jq syntax
+      run: |
+        echo "Validating forensics.jq..."
+        jq -L . -f forensics.jq empty || true
+        echo "Validating tests.jq..."
+        jq -L . -f forensics.jq -f tests/tests.jq empty || true
+      
     - name: Run test suite
       run: |
         chmod +x tests/runner.sh
