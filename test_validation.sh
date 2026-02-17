@@ -1,8 +1,23 @@
 #!/usr/bin/env bash
 # Validation script to test jq-forensics without installation
 
+# Get the directory where this script is located
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+
+# Change to script directory (should be project root)
 cd "$SCRIPT_DIR"
+
+# Verify we're in the right place
+if [ ! -d "src" ] || [ ! -f "tests/tests.jq" ]; then
+    echo "ERROR: This script must be run from the jq-forensics project root directory"
+    echo "Current directory: $(pwd)"
+    echo "Script location: $SCRIPT_DIR"
+    echo ""
+    echo "Please run:"
+    echo "  cd /path/to/jq-forensics"
+    echo "  bash test_validation.sh"
+    exit 1
+fi
 
 echo "=== 0. Checking project structure ==="
 echo "Current directory: $(pwd)"
