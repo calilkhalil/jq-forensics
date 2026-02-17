@@ -32,13 +32,23 @@ fi
 # Change to project root
 cd "$PROJECT_ROOT"
 
-# Use the installed profile (~/.jq) or create combined .jq file if not installed
-if [ -f "$HOME/.jq" ]; then
-    # Profile is installed, use it directly
-    JQ_FILE="$HOME/.jq"
+# Use the installed profile or create combined .jq file
+if [ -L "$HOME/.jq" ] || [ -f "$HOME/.jq" ]; then
+    # Profile is installed, resolve symlink to get actual file
+    if [ -L "$HOME/.jq" ]; then
+        JQ_FILE=$(readlink -f "$HOME/.jq")
+    else
+        JQ_FILE="$HOME/.jq"
+    fi
+    echo "Using installed profile: $JQ_FILE"
+elif [ -f "$HOME/.jq-forensics/.jq" ]; then
+    # Use the file from install directory
+    JQ_FILE="$HOME/.jq-forensics/.jq"
+    echo "Using profile from install directory: $JQ_FILE"
 elif [ -f ".jq" ]; then
     # Combined file exists in project root
     JQ_FILE=".jq"
+    echo "Using .jq from project root"
 else
     # Create combined .jq file like install script does
     echo "Creating combined .jq file..."
@@ -57,10 +67,16 @@ EOF
         fi
     done
     JQ_FILE=".jq"
+    echo "Created .jq file in project root"
 fi
+
+echo "JQ_FILE: $JQ_FILE"
+echo "Testing if file exists and is readable:"
+ls -la "$JQ_FILE" || echo "ERROR: File not found!"
 
 # Load combined .jq file and tests
 # The .jq file contains all functions, then we load tests.jq
+# jq automatically loads ~/.jq, but we need to explicitly load it with -f when using tests.jq
 results=$(echo "null" | jq -f "$JQ_FILE" -f tests/tests.jq 2>&1)
 exit_code=$?
 

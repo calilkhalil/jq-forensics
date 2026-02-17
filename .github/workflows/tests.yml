@@ -1,4 +1,4 @@
-name: Tests
+name: Test
 
 on:
   push:
@@ -25,6 +25,14 @@ jobs:
       
     - name: Install jq-forensics profile
       run: bash scripts/install.sh
+      
+    - name: Debug - Check installed profile
+      run: |
+        echo "Checking if profile is installed:"
+        ls -la ~/.jq || echo "~/.jq not found"
+        echo ""
+        echo "Checking .jq-forensics directory:"
+        ls -la ~/.jq-forensics/ || echo "~/.jq-forensics not found"
       
     - name: Run test suite
       run: bash tests/runner.sh
