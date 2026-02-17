@@ -31,9 +31,19 @@ fi
 # Run tests and process results
 # Change to project root to ensure relative includes work correctly
 cd "$PROJECT_ROOT"
-# Use -f to load files in sequence (forensics first, then tests)
-# The -L flag sets the search path for includes
-results=$(jq -L . -f forensics.jq -f tests/tests.jq 2>&1)
+
+# Try to load and run tests
+# First, test if forensics.jq loads correctly
+if ! echo "null" | jq -L . -f forensics.jq . > /dev/null 2>&1; then
+    echo -e "${RED}✗ Error: forensics.jq failed to load${NC}"
+    echo "Trying to load forensics.jq:"
+    echo "null" | jq -L . -f forensics.jq . 2>&1 || true
+    exit 1
+fi
+
+# Load both files and run tests
+# Combine the files content and pipe to jq
+results=$(cat forensics.jq tests/tests.jq | jq -L . 2>&1)
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then

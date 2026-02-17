@@ -23,12 +23,26 @@ jobs:
     - name: Verify jq installation
       run: jq --version
       
-    - name: Validate jq syntax
+    - name: Debug - List files
       run: |
-        echo "Validating forensics.jq..."
-        jq -L . -f forensics.jq empty || true
-        echo "Validating tests.jq..."
-        jq -L . -f forensics.jq -f tests/tests.jq empty || true
+        echo "Project structure:"
+        ls -la
+        echo ""
+        echo "Source files:"
+        ls -la src/
+        echo ""
+        echo "Test files:"
+        ls -la tests/
+      
+    - name: Validate forensics.jq
+      run: |
+        echo "Testing forensics.jq with empty input..."
+        echo "null" | jq -L . -f forensics.jq || echo "Error loading forensics.jq"
+      
+    - name: Validate tests.jq syntax
+      run: |
+        echo "Testing if tests.jq can be parsed..."
+        jq -L . -f forensics.jq -f tests/tests.jq empty 2>&1 || echo "Error loading tests"
       
     - name: Run test suite
       run: |
