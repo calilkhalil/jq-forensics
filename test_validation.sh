@@ -1,7 +1,18 @@
 #!/usr/bin/env bash
 # Validation script to test jq-forensics without installation
 
-cd "$(dirname "$0")"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+
+echo "=== 0. Checking project structure ==="
+echo "Current directory: $(pwd)"
+echo "Script directory: $SCRIPT_DIR"
+echo "Checking if src/ exists:"
+ls -la src/ 2>&1 || echo "ERROR: src/ directory not found!"
+echo ""
+echo "Checking src/*.jq files:"
+ls -la src/*.jq 2>&1 || echo "ERROR: No .jq files found in src/"
+echo ""
 
 echo "=== 1. Creating combined .jq file (like install.sh) ==="
 cat > /tmp/test.jq << 'EOF'
@@ -10,17 +21,22 @@ cat > /tmp/test.jq << 'EOF'
 
 EOF
 
+FILE_COUNT=0
 for file in src/*.jq; do
   if [ -f "$file" ]; then
     echo "# Source: $file" >> /tmp/test.jq
     cat "$file" >> /tmp/test.jq
     echo "" >> /tmp/test.jq
+    FILE_COUNT=$((FILE_COUNT + 1))
+    echo "  Added: $file"
   fi
 done
 
 echo "✓ Arquivo combinado criado em /tmp/test.jq"
-echo "Últimas 5 linhas:"
-tail -5 /tmp/test.jq
+echo "  Total files added: $FILE_COUNT"
+echo "  File size: $(wc -l < /tmp/test.jq) lines"
+echo "Últimas 10 linhas:"
+tail -10 /tmp/test.jq
 echo ""
 
 echo "=== 2. Testing if combined file loads ==="
