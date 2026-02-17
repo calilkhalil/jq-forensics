@@ -12,19 +12,20 @@ These functions were originally proposed as PRs to add as built-in functions to 
 4. **jq's module system is designed for this** - The `~/.jq` auto-include mechanism allows custom functions to work exactly like built-ins
 5. **Follows jq philosophy** - Keep the core lean, extend through modules
 
-The jq maintainers suggested this approach, and it turned out to be the right call - it's easier to maintain, distribute, and use.
+The jq maintainers suggested this approach, and it turned out to be the right call, it's easier to maintain, distribute, and use.
 
 ## Functions
 
 ### Timestamps
 
-- **fromwebkit** - Converts those huge WebKit/Chrome timestamps into ISO 8601
-- **fromcocoa** - Converts macOS/iOS Cocoa timestamps into ISO 8601
+- **fromwebkit** - Converts WebKit/Chrome timestamps (microseconds since 1601-01-01) into ISO 8601
+- **fromcocoa** - Converts macOS/iOS Cocoa timestamps (seconds since 2001-01-01) into ISO 8601
+- **fromunix** - Converts Unix timestamps (seconds or milliseconds since 1970-01-01) into ISO 8601
 - **toreadable** - Takes any timestamp and makes it human-friendly (YYYY-MM-DD HH:MM:SS)
 
 ### Transformations
 
-- **todefang** - Makes malicious URLs/IPs/emails safe to share in docs
+- **todefang** - Makes malicious URLs/IPs/emails safe to share in docs (defangs http/https, @, and dots)
 - **fromdefang** - Converts them back when you need the original
 
 ## Installation
@@ -84,6 +85,8 @@ New-Item -ItemType SymbolicLink -Path "$env:USERPROFILE\.jq" -Target "$env:USERP
 
 After installation, the functions work like built-in jq functions:
 
+### Timestamp Conversion Examples
+
 ```bash
 # Analyze Chrome history with readable timestamps
 jq '.[] | {
@@ -92,14 +95,65 @@ jq '.[] | {
   last_visit: .last_visit_time | fromwebkit | toreadable
 }' History.json
 
+# Convert Unix boot timestamps from macOS system logs
+echo '{"boot_time": 1741420298}' | jq '.boot_time | fromunix | toreadable'
+# "2025-03-08 09:51:38"
+
+# Chain multiple conversions for readability
+echo '13318523932000000' | jq 'fromwebkit | toreadable'
+# "2012-03-15 10:12:12"
+```
+
+### IOC Defanging Examples
+
+```bash
 # Defang IOCs from incident report
 jq '.indicators | map(todefang)' incident_iocs.json
 
 # Process mixed IOCs in threat intel feed
-echo '["http://evil.com", "192.168.1.1", "attacker@phish.org"]' | 
+echo '["https://evil.com", "http://malware.net", "192.168.1.1", "attacker@phish.org"]' | 
   jq 'map(todefang)'
-# ["hxxp://evil[.]com", "192[.]168[.]1[.]1", "attacker[@]phish[.]org"]
+# ["hxxps://evil[.]com", "hxxp://malware[.]net", "192[.]168[.]1[.]1", "attacker[@]phish[.]org"]
+
+# Restore defanged IOCs for analysis
+echo '"hxxps://evil[.]com"' | jq 'fromdefang'
+# "https://evil.com"
 ```
+
+### Real-World Forensic Analysis Examples
+
+```bash
+# Analyze Chrome browsing history with timestamps
+jq '.[] | select(.url | test("malicious")) | {
+  url: .url,
+  visit_time: .last_visit_time | fromwebkit | toreadable,
+  visit_count: .visit_count
+}' ~/.config/google-chrome/Default/History.json
+
+# Parse macOS system boot times from logs
+grep "BOOT_TIME" system.log | jq -R 'split(" ") | {
+  date: .[0:3] | join(" "),
+  boot_time: .[4] | tonumber | fromunix | toreadable
+}'
+
+# Defang IOCs before sharing in incident reports
+jq '{
+  title: .title,
+  indicators: .indicators | map(todefang),
+  timestamp: .timestamp | fromunix | toreadable
+}' threat_intel.json > safe_report.json
+```
+
+## Testing
+
+Run the test suite to verify all functions work correctly:
+
+```bash
+chmod +x tests/runner.sh
+./tests/runner.sh
+```
+
+The test suite uses jq pipelines to validate all timestamp conversions and transformations. Tests are defined in `tests/tests.jq` as pipelines that should evaluate to `true` when they pass.
 
 ## Architecture
 
