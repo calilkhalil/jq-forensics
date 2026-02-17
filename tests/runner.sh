@@ -29,13 +29,19 @@ if [ ! -f "$TESTS_JQ" ]; then
 fi
 
 # Run tests and process results
-# Change to project root to ensure relative includes work correctly
+# Change to project root
 cd "$PROJECT_ROOT"
 
-# Check if combined .jq file exists (created by CI or install script)
-# If not, create it like the install script does
-if [ ! -f ".jq" ]; then
-    echo "Creating combined .jq file (like install script)..."
+# Use the installed profile (~/.jq) or create combined .jq file if not installed
+if [ -f "$HOME/.jq" ]; then
+    # Profile is installed, use it directly
+    JQ_FILE="$HOME/.jq"
+elif [ -f ".jq" ]; then
+    # Combined file exists in project root
+    JQ_FILE=".jq"
+else
+    # Create combined .jq file like install script does
+    echo "Creating combined .jq file..."
     cat > .jq << 'EOF'
 # jq-forensics - Forensic analysis functions for jq
 # Auto-generated - Do not edit directly
@@ -50,11 +56,12 @@ EOF
             echo "" >> .jq
         fi
     done
+    JQ_FILE=".jq"
 fi
 
 # Load combined .jq file and tests
 # The .jq file contains all functions, then we load tests.jq
-results=$(echo "null" | jq -f .jq -f tests/tests.jq 2>&1)
+results=$(echo "null" | jq -f "$JQ_FILE" -f tests/tests.jq 2>&1)
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then

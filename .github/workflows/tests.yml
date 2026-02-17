@@ -17,37 +17,16 @@ jobs:
       
     - name: Install jq
       run: |
-        # Install latest jq from official source
-        JQ_VERSION="1.7.1"
-        wget -q -O jq https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/jq-linux-amd64
-        chmod +x jq
-        sudo mv jq /usr/local/bin/
+        sudo apt-get update
+        sudo apt-get install -y jq
         
     - name: Verify jq installation
-      run: |
-        jq --version
-        echo "jq location: $(which jq)"
-        echo "Testing jq with a simple command:"
-        echo '{"test": true}' | jq .
+      run: jq --version
       
-    - name: Setup jq profile (like install script)
+    - name: Install jq-forensics profile
       run: |
-        # Create combined .jq file just like the install script does
-        echo "# jq-forensics - Forensic analysis functions for jq" > .jq
-        echo "# Auto-generated - Do not edit directly" >> .jq
-        echo "" >> .jq
-        
-        # Concatenate all source modules
-        for file in src/*.jq; do
-          if [ -f "$file" ]; then
-            echo "# Source: $file" >> .jq
-            cat "$file" >> .jq
-            echo "" >> .jq
-          fi
-        done
-        
-        echo "Created combined .jq file:"
-        wc -l .jq
+        chmod +x scripts/install.sh
+        ./scripts/install.sh
       
     - name: Run test suite
       run: |
