@@ -14,93 +14,42 @@ NC='\033[0m' # No Color
 echo "Running jq-forensics tests..."
 echo ""
 
-# Load forensics functions and run tests
-FORENSICS_JQ="$PROJECT_ROOT/forensics.jq"
-TESTS_JQ="$SCRIPT_DIR/tests.jq"
-
-if [ ! -f "$FORENSICS_JQ" ]; then
-    echo -e "${RED}Error: forensics.jq not found at $FORENSICS_JQ${NC}"
-    exit 1
-fi
-
-if [ ! -f "$TESTS_JQ" ]; then
-    echo -e "${RED}Error: tests.jq not found at $TESTS_JQ${NC}"
-    exit 1
-fi
-
-# Run tests and process results
 # Change to project root
 cd "$PROJECT_ROOT"
 
-# Use the installed profile or create combined .jq file
-if [ -L "$HOME/.jq" ] || [ -f "$HOME/.jq" ]; then
-    # Profile is installed, resolve symlink to get actual file
-    if [ -L "$HOME/.jq" ]; then
-        JQ_FILE=$(readlink -f "$HOME/.jq")
-    else
-        JQ_FILE="$HOME/.jq"
-    fi
-    echo "Using installed profile: $JQ_FILE"
-elif [ -f "$HOME/.jq-forensics/.jq" ]; then
-    # Use the file from install directory
-    JQ_FILE="$HOME/.jq-forensics/.jq"
-    echo "Using profile from install directory: $JQ_FILE"
-elif [ -f ".jq" ]; then
-    # Combined file exists in project root
-    JQ_FILE=".jq"
-    echo "Using .jq from project root"
-else
-    # Create combined .jq file like install script does
-    echo "Creating combined .jq file..."
-    cat > .jq << 'EOF'
-# jq-forensics - Forensic analysis functions for jq
-# Auto-generated - Do not edit directly
-
-EOF
-    
-    # Concatenate all source modules
-    for file in src/*.jq; do
-        if [ -f "$file" ]; then
-            echo "# Source: $file" >> .jq
-            cat "$file" >> .jq
-            echo "" >> .jq
-        fi
-    done
-    JQ_FILE=".jq"
-    echo "Created .jq file in project root"
+# Check if profile is installed
+if [ ! -f "$HOME/.jq" ] && [ ! -L "$HOME/.jq" ]; then
+    echo -e "${RED}Error: jq-forensics profile not installed${NC}"
+    echo "Please run: bash scripts/install.sh"
+    exit 1
 fi
 
-echo "JQ_FILE: $JQ_FILE"
-echo "Testing if file exists and is readable:"
-ls -la "$JQ_FILE" || echo "ERROR: File not found!"
+# Check if tests.jq exists
+if [ ! -f "tests/tests.jq" ]; then
+    echo -e "${RED}Error: tests/tests.jq not found${NC}"
+    exit 1
+fi
 
-# Load combined .jq file and tests
-# Use -f to load both files, then explicitly evaluate run_tests
+echo "Profile installed: $HOME/.jq"
+echo "Verifying functions are available..."
+# Quick test to ensure functions are loaded
+if ! echo "13318523932000000" | jq 'fromwebkit' > /dev/null 2>&1; then
+    echo -e "${RED}Error: Functions not available. Profile may not be loading correctly.${NC}"
+    exit 1
+fi
+echo -e "${GREEN}✓ Functions loaded${NC}"
 echo ""
 echo "Running tests..."
 
-# Load JQ_FILE first (contains all functions), then tests.jq, then execute run_tests
-# When using multiple -f flags, jq loads all files, then we need to provide the expression
-# Since jq automatically loads ~/.jq, we might not need to load JQ_FILE if it's the installed profile
-# But to be safe, we'll load it explicitly and then tests.jq, then call run_tests
-results=$(jq -f "$JQ_FILE" -f tests/tests.jq run_tests <<< "null" 2>&1)
+# jq automatically loads ~/.jq, so we just need to load tests.jq
+# tests.jq already has 'run_tests' as top-level expression, so it executes automatically
+results=$(echo "null" | jq -f tests/tests.jq 2>&1)
 exit_code=$?
 
 if [ $exit_code -ne 0 ]; then
     echo -e "${RED}✗ Test execution failed:${NC}"
     echo "jq output:"
     echo "$results"
-    echo ""
-    echo "Debug info:"
-    echo "  PROJECT_ROOT: $PROJECT_ROOT"
-    echo "  JQ_FILE: $JQ_FILE"
-    echo "  TESTS_JQ: $TESTS_JQ"
-    echo "  Exit code: $exit_code"
-    echo ""
-    echo "Trying to validate syntax..."
-    # Try to check if the combined file has valid syntax
-    echo "null" | jq -f "$JQ_FILE" . > /dev/null 2>&1 && echo "JQ_FILE syntax OK" || echo "JQ_FILE has syntax errors"
-    echo "null" | jq -f tests/tests.jq . > /dev/null 2>&1 && echo "tests.jq syntax OK" || echo "tests.jq has syntax errors"
     exit 1
 fi
 

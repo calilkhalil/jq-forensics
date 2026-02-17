@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -e
 
+# Get script directory and change to project root
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+cd "${PROJECT_ROOT}"
+
 INSTALL_DIR="${HOME}/.jq-forensics"
 JQ_FILE="${HOME}/.jq"
 
@@ -22,7 +27,7 @@ cat > "${INSTALL_DIR}/.jq" << 'EOF'
 
 EOF
 
-# Concatenate all source modules
+# Concatenate all source modules (from project root)
 for file in src/*.jq; do
     if [ -f "$file" ]; then
         echo "# Source: $file" >> "${INSTALL_DIR}/.jq"
@@ -35,13 +40,11 @@ done
 if [ -e "${JQ_FILE}" ] && [ ! -L "${JQ_FILE}" ]; then
     echo ""
     echo "Warning: ${JQ_FILE} already exists and is not a symlink."
-    echo "Please backup your existing file and remove it, then run:"
-    echo "  ln -sf ${INSTALL_DIR}/.jq ${JQ_FILE}"
-    echo ""
-    exit 1
+    echo "Removing existing file (CI/automated install)..."
+    rm -f "${JQ_FILE}"
 fi
 
-# Create symlink
+# Create symlink (force to overwrite existing symlink)
 echo "Creating symlink ${JQ_FILE} -> ${INSTALL_DIR}/.jq..."
 ln -sf "${INSTALL_DIR}/.jq" "${JQ_FILE}"
 
