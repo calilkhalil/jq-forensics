@@ -84,9 +84,15 @@ echo "Running tests..."
 TEMP_FILE=$(mktemp)
 cat "$JQ_FILE" tests/tests.jq > "$TEMP_FILE"
 
+# Debug: show last few lines of combined file to verify run_tests is there
+echo "Last 5 lines of combined file:"
+tail -5 "$TEMP_FILE"
+echo ""
+
 # When using -f with a file that ends with a top-level expression,
 # jq automatically executes that expression
 # Since tests.jq ends with "run_tests", it will execute automatically
+echo "Executing jq..."
 results=$(echo "null" | jq -f "$TEMP_FILE" 2>&1)
 exit_code=$?
 
@@ -95,6 +101,7 @@ rm -f "$TEMP_FILE"
 
 if [ $exit_code -ne 0 ]; then
     echo -e "${RED}✗ Test execution failed:${NC}"
+    echo "jq output:"
     echo "$results"
     echo ""
     echo "Debug info:"
@@ -102,6 +109,11 @@ if [ $exit_code -ne 0 ]; then
     echo "  JQ_FILE: $JQ_FILE"
     echo "  TESTS_JQ: $TESTS_JQ"
     echo "  Exit code: $exit_code"
+    echo ""
+    echo "Trying to validate syntax..."
+    # Try to check if the combined file has valid syntax
+    echo "null" | jq -f "$JQ_FILE" . > /dev/null 2>&1 && echo "JQ_FILE syntax OK" || echo "JQ_FILE has syntax errors"
+    echo "null" | jq -f tests/tests.jq . > /dev/null 2>&1 && echo "tests.jq syntax OK" || echo "tests.jq has syntax errors"
     exit 1
 fi
 
