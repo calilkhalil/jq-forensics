@@ -95,7 +95,17 @@ if [ "$array_check" != "true" ]; then
 fi
 
 # Parse results and display
-echo "$results" | jq -r '.[] | if .passed then "✓ \(.name)" else "✗ \(.name)" end' | while IFS= read -r line || [ -n "$line" ]; do
+echo "$results" | jq -r '.[] | 
+  if .passed then 
+    "✓ \(.name)"
+  else 
+    "✗ \(.name)\n" + 
+    (if .actual and .expected then
+      "  Expected: \(.expected)\n  Actual:   \(.actual)"
+    else
+      "  Tests: \(.tests)"
+    end)
+  end' | while IFS= read -r line || [ -n "$line" ]; do
     if [[ "$line" == ✓* ]]; then
         echo -e "${GREEN}$line${NC}"
     else
