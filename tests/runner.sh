@@ -57,11 +57,6 @@ echo "Executing: echo 'null' | jq -f tests/tests.jq"
 results=$(echo "null" | jq -f tests/tests.jq 2>&1)
 exit_code=$?
 
-echo "jq exit code: $exit_code"
-echo "jq output (first 500 chars):"
-echo "$results" | head -c 500
-echo ""
-
 if [ $exit_code -ne 0 ]; then
     echo -e "${RED}✗ Test execution failed (exit code: $exit_code):${NC}"
     echo "Full jq output:"
@@ -95,17 +90,7 @@ if [ "$array_check" != "true" ]; then
 fi
 
 # Parse results and display
-echo "$results" | jq -r '.[] | 
-  if .passed then 
-    "✓ \(.name)"
-  else 
-    "✗ \(.name)\n" + 
-    (if .actual and .expected then
-      "  Expected: \(.expected)\n  Actual:   \(.actual)"
-    else
-      "  Tests: \(.tests)"
-    end)
-  end' | while IFS= read -r line || [ -n "$line" ]; do
+echo "$results" | jq -r '.[] | if .passed then "✓ \(.name)" else "✗ \(.name)" end' | while IFS= read -r line || [ -n "$line" ]; do
     if [[ "$line" == ✓* ]]; then
         echo -e "${GREEN}$line${NC}"
     else

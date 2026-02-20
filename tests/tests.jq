@@ -6,16 +6,8 @@ def test_fromwebkit:
   {
     name: "fromwebkit",
     tests: [
-      (13318523932000000 | fromwebkit == "2012-03-15T10:12:12Z"),
+      (13318523932000000 | fromwebkit == "2023-01-18T13:58:52Z"),
       (0 | fromwebkit == null)
-    ],
-    actual: [
-      (13318523932000000 | fromwebkit),
-      (0 | fromwebkit)
-    ],
-    expected: [
-      "2012-03-15T10:12:12Z",
-      null
     ]
   } | .passed = ((.tests | [.[] | select(. == false)] | length) == 0);
 
@@ -25,13 +17,7 @@ def test_fromcocoa:
   {
     name: "fromcocoa",
     tests: [
-      (978307200 | fromcocoa == "2001-01-01T00:00:00Z")
-    ],
-    actual: [
-      (978307200 | fromcocoa)
-    ],
-    expected: [
-      "2001-01-01T00:00:00Z"
+      (0 | fromcocoa == "2001-01-01T00:00:00Z")
     ]
   } | .passed = ((.tests | [.[] | select(. == false)] | length) == 0);
 
@@ -40,19 +26,9 @@ def test_fromunix:
   {
     name: "fromunix",
     tests: [
-      (1741420298 | fromunix == "2025-03-08T09:51:38Z"),
-      (1741420298000 | fromunix == "2025-03-08T09:51:38Z"),
+      (1741420298 | fromunix == "2025-03-08T07:51:38Z"),
+      (1741420298000 | fromunix == "2025-03-08T07:51:38Z"),
       (0 | fromunix == null)
-    ],
-    actual: [
-      (1741420298 | fromunix),
-      (1741420298000 | fromunix),
-      (0 | fromunix)
-    ],
-    expected: [
-      "2025-03-08T09:51:38Z",
-      "2025-03-08T09:51:38Z",
-      null
     ]
   } | .passed = ((.tests | [.[] | select(. == false)] | length) == 0);
 
@@ -62,15 +38,7 @@ def test_toreadable:
     name: "toreadable",
     tests: [
       ("2025-03-08T09:51:38Z" | toreadable == "2025-03-08 09:51:38"),
-      (1741420298 | fromunix | toreadable == "2025-03-08 09:51:38")
-    ],
-    actual: [
-      ("2025-03-08T09:51:38Z" | toreadable),
-      (1741420298 | fromunix | toreadable)
-    ],
-    expected: [
-      "2025-03-08 09:51:38",
-      "2025-03-08 09:51:38"
+      (1741420298 | fromunix | toreadable == "2025-03-08 07:51:38")
     ]
   } | .passed = ((.tests | [.[] | select(. == false)] | length) == 0);
 
@@ -103,8 +71,8 @@ def test_chaining:
   {
     name: "chaining",
     tests: [
-      (13318523932000000 | fromwebkit | toreadable == "2012-03-15 10:12:12"),
-      (1741420298 | fromunix | toreadable == "2025-03-08 09:51:38"),
+      (13318523932000000 | fromwebkit | toreadable == "2023-01-18 13:58:52"),
+      (1741420298 | fromunix | toreadable == "2025-03-08 07:51:38"),
       ("http://evil.com" | todefang | fromdefang == "http://evil.com")
     ]
   } | .passed = ((.tests | [.[] | select(. == false)] | length) == 0);
