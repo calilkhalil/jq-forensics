@@ -6,8 +6,12 @@ def fromdefang:
     if length == 0 then
       error("fromdefang: input string cannot be empty")
     else
+      # Restore URLs (hxxps/hxxp)
+      gsub("hxxps"; "https") |
       gsub("hxxp"; "http") |
+      # Restore email addresses
       gsub("\\[@\\]"; "@") |
+      # Restore dots
       gsub("\\[\\.\\]"; ".")
     end
   elif . == null then

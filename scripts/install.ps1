@@ -74,8 +74,13 @@ try {
 Write-Host ""
 Write-Host "Available functions:"
 Write-Host "  - fromwebkit    Convert WebKit/Chrome timestamps"
+Write-Host "  - fromcocoa     Convert macOS/iOS Cocoa timestamps"
+Write-Host "  - fromunix      Convert Unix timestamps"
 Write-Host "  - toreadable    Convert timestamps to readable format"
+Write-Host "  - todefang      Defang IOCs (URLs, IPs, emails)"
+Write-Host "  - fromdefang    Restore defanged IOCs"
 Write-Host ""
 Write-Host "Usage examples:"
 Write-Host '  echo 13318523932000000 | jq "fromwebkit"'
 Write-Host '  echo 13318523932000000 | jq "fromwebkit | toreadable"'
+Write-Host '  echo 1741420298 | jq "fromunix | toreadable"'

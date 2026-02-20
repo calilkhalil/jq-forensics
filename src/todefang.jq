@@ -6,8 +6,12 @@ def todefang:
     if length == 0 then
       error("todefang: input string cannot be empty")
     else
+      # Defang URLs (http/https)
+      gsub("https"; "hxxps") |
       gsub("http"; "hxxp") |
+      # Defang email addresses (@)
       gsub("@"; "[@]") |
+      # Defang dots (IPs, domains, URLs)
       gsub("\\."; "[.]")
     end
   elif . == null then

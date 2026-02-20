@@ -5,6 +5,7 @@
 # Timestamp modules
 include "src/fromwebkit";
 include "src/fromcocoa";
+include "src/fromunix";
 include "src/toreadable";
 
 # Transformation modules
